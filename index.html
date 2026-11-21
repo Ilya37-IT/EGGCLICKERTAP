@@ -4,9 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Egg Tap</title>
-
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-
     <style>
         html, body {
             width: 100%;
@@ -24,18 +22,15 @@
             user-select: none;
             -webkit-tap-highlight-color: transparent;
             overflow: hidden;
+            position: relative;
         }
 
-        .app {
+        /* Главный экран */
+        .game-screen {
             display: flex;
             flex-direction: column;
             align-items: center;
-        }
-
-        .title {
-            font-size: 28px;
-            margin-bottom: 30px;
-            font-weight: bold;
+            position: relative;
         }
 
         .egg {
@@ -57,14 +52,135 @@
             font-size: 44px;
             font-weight: bold;
         }
+
+        /* Кнопка магазина */
+        .shop-button {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: #0088cc;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        }
+
+        .shop-button:active {
+            transform: scale(0.95);
+        }
+
+        /* Экран магазина */
+        .shop-screen {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            width: 90%;
+            max-width: 400px;
+        }
+
+        .shop-title {
+            font-size: 32px;
+            font-weight: bold;
+            margin-bottom: 30px;
+        }
+
+        .shop-item {
+            background: #2c2c2e;
+            padding: 20px;
+            border-radius: 15px;
+            width: 100%;
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .item-info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .item-name {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .item-desc {
+            font-size: 14px;
+            color: #aaa;
+        }
+
+        .buy-button {
+            background: #34c759;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .buy-button:disabled {
+            background: #555;
+            cursor: not-allowed;
+        }
+
+        .buy-button:active:not(:disabled) {
+            transform: scale(0.95);
+        }
+
+        .back-button {
+            background: #ff3b30;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+
+        .back-button:active {
+            transform: scale(0.95);
+        }
+
+        .balance {
+            font-size: 20px;
+            margin-bottom: 20px;
+            color: #ffd700;
+        }
     </style>
 </head>
 <body>
 
-    <div class="app">
-        <div class="title">EGG TAP</div>
+    <!-- Главный экран -->
+    <div class="game-screen" id="gameScreen">
+        <button class="shop-button" id="shopBtn">Shop 🛒</button>
         <div class="egg" id="egg"></div>
         <div class="counter" id="counter">0</div>
+    </div>
+
+    <!-- Экран магазина -->
+    <div class="shop-screen" id="shopScreen">
+        <div class="shop-title">Магазин</div>
+        <div class="balance">Баланс: <span id="shopBalance">0</span> 🥚</div>
+        
+        <div class="shop-item">
+            <div class="item-info">
+                <div class="item-name">Двойной клик</div>
+                <div class="item-desc">+2 за каждое нажатие</div>
+            </div>
+            <button class="buy-button" id="buyDouble">Купить (500)</button>
+        </div>
+
+        <button class="back-button" id="backBtn">Назад</button>
     </div>
 
     <script>
@@ -75,19 +191,77 @@
             tg.expand();
         }
 
-        let count = 0;
+        // Загружаем данные из localStorage
+        let count = parseInt(localStorage.getItem('eggCount')) || 0;
+        let hasDouble = localStorage.getItem('hasDouble') === 'true';
 
-        const egg = document.getElementById("egg");
-        const counter = document.getElementById("counter");
+        const egg = document.getElementById('egg');
+        const counter = document.getElementById('counter');
+        const shopBtn = document.getElementById('shopBtn');
+        const backBtn = document.getElementById('backBtn');
+        const gameScreen = document.getElementById('gameScreen');
+        const shopScreen = document.getElementById('shopScreen');
+        const shopBalance = document.getElementById('shopBalance');
+        const buyDouble = document.getElementById('buyDouble');
 
-        egg.addEventListener("click", function () {
-            count++;
+        // Обновляем счетчик
+        function updateCounter() {
             counter.textContent = count;
+            shopBalance.textContent = count;
+            
+            // Обновляем кнопку покупки
+            if (hasDouble) {
+                buyDouble.textContent = 'Куплено ✓';
+                buyDouble.disabled = true;
+            } else if (count < 500) {
+                buyDouble.disabled = true;
+            } else {
+                buyDouble.disabled = false;
+            }
+        }
+
+        // Клик по яйцу
+        egg.addEventListener('click', function () {
+            const clickValue = hasDouble ? 2 : 1;
+            count += clickValue;
+            localStorage.setItem('eggCount', count);
+            updateCounter();
 
             if (tg && tg.HapticFeedback) {
-                tg.HapticFeedback.impactOccurred("light");
+                tg.HapticFeedback.impactOccurred('light');
             }
         });
+
+        // Открыть магазин
+        shopBtn.addEventListener('click', function () {
+            gameScreen.style.display = 'none';
+            shopScreen.style.display = 'flex';
+            updateCounter();
+        });
+
+        // Вернуться назад
+        backBtn.addEventListener('click', function () {
+            shopScreen.style.display = 'none';
+            gameScreen.style.display = 'flex';
+        });
+
+        // Купить улучшение
+        buyDouble.addEventListener('click', function () {
+            if (count >= 500 && !hasDouble) {
+                count -= 500;
+                hasDouble = true;
+                localStorage.setItem('eggCount', count);
+                localStorage.setItem('hasDouble', 'true');
+                updateCounter();
+
+                if (tg && tg.HapticFeedback) {
+                    tg.HapticFeedback.notificationOccurred('success');
+                }
+            }
+        });
+
+        // Инициализация
+        updateCounter();
     </script>
 
 </body>
