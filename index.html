@@ -6,22 +6,27 @@
     <title>Egg Tap</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
         html, body {
             width: 100%;
             height: 100%;
-            margin: 0;
+            overflow: hidden;
         }
 
         body {
             background: #1c1c1e;
             color: white;
-            font-family: Arial, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
             display: flex;
             justify-content: center;
             align-items: center;
             user-select: none;
             -webkit-tap-highlight-color: transparent;
-            overflow: hidden;
             position: relative;
         }
 
@@ -30,15 +35,18 @@
             display: flex;
             flex-direction: column;
             align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 100%;
             position: relative;
         }
 
         .egg {
             width: 160px;
             height: 210px;
-            background: linear-gradient(135deg, #ffffff, #dcdcdc);
+            background: linear-gradient(135deg, #ffffff 0%, #e0e0e0 100%);
             border-radius: 50% 50% 45% 45%;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.5);
             cursor: pointer;
             transition: transform 0.08s ease;
         }
@@ -49,8 +57,15 @@
 
         .counter {
             margin-top: 30px;
-            font-size: 44px;
+            font-size: 48px;
             font-weight: bold;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.3);
+        }
+
+        .click-value {
+            margin-top: 10px;
+            font-size: 18px;
+            color: #aaa;
         }
 
         /* Кнопка магазина */
@@ -58,15 +73,16 @@
             position: absolute;
             top: 20px;
             right: 20px;
-            background: #0088cc;
+            background: linear-gradient(135deg, #0088cc, #0066aa);
             color: white;
             border: none;
-            padding: 12px 20px;
-            border-radius: 10px;
+            padding: 12px 24px;
+            border-radius: 12px;
             font-size: 16px;
             font-weight: bold;
             cursor: pointer;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            transition: transform 0.1s ease;
         }
 
         .shop-button:active {
@@ -78,57 +94,81 @@
             display: none;
             flex-direction: column;
             align-items: center;
-            width: 90%;
-            max-width: 400px;
+            justify-content: center;
+            width: 100%;
+            height: 100%;
+            padding: 20px;
         }
 
         .shop-title {
-            font-size: 32px;
+            font-size: 36px;
             font-weight: bold;
+            margin-bottom: 20px;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.3);
+        }
+
+        .balance {
+            font-size: 24px;
             margin-bottom: 30px;
+            color: #ffd700;
+            font-weight: bold;
         }
 
         .shop-item {
-            background: #2c2c2e;
-            padding: 20px;
-            border-radius: 15px;
+            background: linear-gradient(135deg, #2c2c2e, #3a3a3c);
+            padding: 25px;
+            border-radius: 20px;
             width: 100%;
-            margin-bottom: 15px;
+            max-width: 400px;
+            margin-bottom: 20px;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.3);
         }
 
         .item-info {
             display: flex;
             flex-direction: column;
+            flex: 1;
         }
 
         .item-name {
-            font-size: 18px;
+            font-size: 20px;
             font-weight: bold;
-            margin-bottom: 5px;
+            margin-bottom: 8px;
         }
 
         .item-desc {
             font-size: 14px;
             color: #aaa;
+            margin-bottom: 5px;
+        }
+
+        .item-level {
+            font-size: 13px;
+            color: #0088cc;
+            font-weight: bold;
         }
 
         .buy-button {
-            background: #34c759;
+            background: linear-gradient(135deg, #34c759, #28a745);
             color: white;
             border: none;
-            padding: 10px 20px;
-            border-radius: 10px;
+            padding: 12px 24px;
+            border-radius: 12px;
             font-size: 16px;
             font-weight: bold;
             cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            transition: transform 0.1s ease;
+            white-space: nowrap;
         }
 
         .buy-button:disabled {
-            background: #555;
+            background: linear-gradient(135deg, #555, #666);
             cursor: not-allowed;
+            opacity: 0.6;
         }
 
         .buy-button:active:not(:disabled) {
@@ -136,25 +176,21 @@
         }
 
         .back-button {
-            background: #ff3b30;
+            background: linear-gradient(135deg, #ff3b30, #d32f2f);
             color: white;
             border: none;
-            padding: 12px 30px;
-            border-radius: 10px;
-            font-size: 16px;
+            padding: 14px 40px;
+            border-radius: 12px;
+            font-size: 18px;
             font-weight: bold;
             cursor: pointer;
             margin-top: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            transition: transform 0.1s ease;
         }
 
         .back-button:active {
             transform: scale(0.95);
-        }
-
-        .balance {
-            font-size: 20px;
-            margin-bottom: 20px;
-            color: #ffd700;
         }
     </style>
 </head>
@@ -162,25 +198,27 @@
 
     <!-- Главный экран -->
     <div class="game-screen" id="gameScreen">
-        <button class="shop-button" id="shopBtn">Shop 🛒</button>
+        <button class="shop-button" id="shopBtn">🛒 Shop</button>
         <div class="egg" id="egg"></div>
         <div class="counter" id="counter">0</div>
+        <div class="click-value" id="clickValue">+1 за клик</div>
     </div>
 
     <!-- Экран магазина -->
     <div class="shop-screen" id="shopScreen">
-        <div class="shop-title">Магазин</div>
-        <div class="balance">Баланс: <span id="shopBalance">0</span> 🥚</div>
+        <div class="shop-title">🛒 Магазин</div>
+        <div class="balance">💰 Баланс: <span id="shopBalance">0</span></div>
         
         <div class="shop-item">
             <div class="item-info">
-                <div class="item-name">Двойной клик</div>
-                <div class="item-desc">+2 за каждое нажатие</div>
+                <div class="item-name">⚡ Сила клика</div>
+                <div class="item-desc" id="itemDesc">+2 за каждое нажатие</div>
+                <div class="item-level" id="itemLevel">Уровень: 0</div>
             </div>
-            <button class="buy-button" id="buyDouble">Купить (500)</button>
+            <button class="buy-button" id="buyButton">Купить (500)</button>
         </div>
 
-        <button class="back-button" id="backBtn">Назад</button>
+        <button class="back-button" id="backBtn">← Назад</button>
     </div>
 
     <script>
@@ -193,39 +231,59 @@
 
         // Загружаем данные из localStorage
         let count = parseInt(localStorage.getItem('eggCount')) || 0;
-        let hasDouble = localStorage.getItem('hasDouble') === 'true';
+        let upgradeLevel = parseInt(localStorage.getItem('upgradeLevel')) || 0;
 
         const egg = document.getElementById('egg');
         const counter = document.getElementById('counter');
+        const clickValueDisplay = document.getElementById('clickValue');
         const shopBtn = document.getElementById('shopBtn');
         const backBtn = document.getElementById('backBtn');
         const gameScreen = document.getElementById('gameScreen');
         const shopScreen = document.getElementById('shopScreen');
         const shopBalance = document.getElementById('shopBalance');
-        const buyDouble = document.getElementById('buyDouble');
+        const buyButton = document.getElementById('buyButton');
+        const itemDesc = document.getElementById('itemDesc');
+        const itemLevel = document.getElementById('itemLevel');
 
-        // Обновляем счетчик
-        function updateCounter() {
+        // Функция для расчета стоимости улучшения
+        function getUpgradeCost(level) {
+            return 500 + (level * 750);
+        }
+
+        // Функция для расчета силы клика
+        function getClickPower(level) {
+            return 1 + level;
+        }
+
+        // Обновление интерфейса
+        function updateUI() {
+            const clickPower = getClickPower(upgradeLevel);
+            const nextCost = getUpgradeCost(upgradeLevel);
+
+            // Главный экран
             counter.textContent = count;
+            clickValueDisplay.textContent = `+${clickPower} за клик`;
+
+            // Магазин
             shopBalance.textContent = count;
-            
-            // Обновляем кнопку покупки
-            if (hasDouble) {
-                buyDouble.textContent = 'Куплено ✓';
-                buyDouble.disabled = true;
-            } else if (count < 500) {
-                buyDouble.disabled = true;
+            itemLevel.textContent = `Уровень: ${upgradeLevel}`;
+            itemDesc.textContent = `+${clickPower + 1} за каждое нажатие`;
+            buyButton.textContent = `Купить (${nextCost})`;
+
+            // Активность кнопки
+            if (count < nextCost) {
+                buyButton.disabled = true;
             } else {
-                buyDouble.disabled = false;
+                buyButton.disabled = false;
             }
         }
 
         // Клик по яйцу
         egg.addEventListener('click', function () {
-            const clickValue = hasDouble ? 2 : 1;
-            count += clickValue;
+            const clickPower = getClickPower(upgradeLevel);
+            count += clickPower;
             localStorage.setItem('eggCount', count);
-            updateCounter();
+            updateUI();
 
             if (tg && tg.HapticFeedback) {
                 tg.HapticFeedback.impactOccurred('light');
@@ -236,23 +294,28 @@
         shopBtn.addEventListener('click', function () {
             gameScreen.style.display = 'none';
             shopScreen.style.display = 'flex';
-            updateCounter();
+            updateUI();
         });
 
         // Вернуться назад
         backBtn.addEventListener('click', function () {
             shopScreen.style.display = 'none';
             gameScreen.style.display = 'flex';
+            updateUI();
         });
 
         // Купить улучшение
-        buyDouble.addEventListener('click', function () {
-            if (count >= 500 && !hasDouble) {
-                count -= 500;
-                hasDouble = true;
+        buyButton.addEventListener('click', function () {
+            const cost = getUpgradeCost(upgradeLevel);
+            
+            if (count >= cost) {
+                count -= cost;
+                upgradeLevel++;
+                
                 localStorage.setItem('eggCount', count);
-                localStorage.setItem('hasDouble', 'true');
-                updateCounter();
+                localStorage.setItem('upgradeLevel', upgradeLevel);
+                
+                updateUI();
 
                 if (tg && tg.HapticFeedback) {
                     tg.HapticFeedback.notificationOccurred('success');
@@ -261,7 +324,7 @@
         });
 
         // Инициализация
-        updateCounter();
+        updateUI();
     </script>
 
 </body>
