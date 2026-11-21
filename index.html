@@ -278,9 +278,9 @@
             tg.expand();
         }
 
-        // Загружаем данные из localStorage
-        let count = parseInt(localStorage.getItem('eggCount')) || 0;
-        let upgradeLevel = parseInt(localStorage.getItem('upgradeLevel')) || 0;
+        // Данные хранятся только в памяти (сбрасываются при закрытии)
+        let count = 0;
+        let upgradeLevel = 0;
 
         const egg = document.getElementById('egg');
         const counter = document.getElementById('counter');
@@ -331,7 +331,6 @@
         egg.addEventListener('click', function () {
             const clickPower = getClickPower(upgradeLevel);
             count += clickPower;
-            localStorage.setItem('eggCount', count);
             updateUI();
 
             if (tg && tg.HapticFeedback) {
@@ -360,9 +359,6 @@
             if (count >= cost) {
                 count -= cost;
                 upgradeLevel++;
-                
-                localStorage.setItem('eggCount', count);
-                localStorage.setItem('upgradeLevel', upgradeLevel);
                 
                 updateUI();
 
