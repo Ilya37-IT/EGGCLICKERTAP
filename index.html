@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <!-- Важно: запрещаем масштабирование, чтобы при частых кликах экран не дергался -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Egg Tap</title>
+    <!-- Подключаем официальный скрипт Telegram Web App -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        /* Используем переменные темы Telegram, чтобы приложение выглядело нативно (темная/светлая тема) */
+        body {
+            background-color: var(--tg-theme-bg-color, #1c1c1e);
+            color: var(--tg-theme-text-color, #ffffff);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            user-select: none; /* Запрещаем выделение текста при кликах */
+            -webkit-tap-highlight-color: transparent; /* Убираем синюю подсветку при клике на Android */
+        }
+        #egg {
+            font-size: 120px;
+            cursor: pointer;
+            transition: transform 0.1s ease;
+        }
+        /* Эффект нажатия на яйцо */
+        #egg:active {
+            transform: scale(0.90);
+        }
+        #counter {
+            font-size: 36px;
+            font-weight: bold;
+            margin-top: 30px;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="egg">🥚</div>
+    <div id="counter">Счет: 0</div>
+
+    <script>
+        // Инициализируем Telegram Web App
+        const tg = window.Telegram.WebApp;
+        tg.ready(); // Сообщаем Telegram, что приложение загрузилось
+        tg.expand(); // Разворачиваем приложение на всю высоту экрана
+
+        let count = 0;
+        const egg = document.getElementById('egg');
+        const counterDisplay = document.getElementById('counter');
+
+        // Обработка клика по яйцу
+        egg.addEventListener('click', () => {
+            count++;
+            counterDisplay.innerText = `Счет: ${count}`;
+
+            // Добавляем приятную вибрацию при клике (работает на телефонах)
+            if (tg.HapticFeedback) {
+                tg.HapticFeedback.impactOccurred('medium');
+            }
+        });
+    </script>
+</body>
+</html>
