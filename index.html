@@ -271,106 +271,107 @@
     </div>
 
     <script>
-        const tg = window.Telegram && window.Telegram.WebApp;
+    const tg = window.Telegram && window.Telegram.WebApp;
 
-        if (tg) {
-            tg.ready();
-            tg.expand();
+    if (tg) {
+        tg.ready();
+        tg.expand();
+    }
+
+    // ПРИНУДИТЕЛЬНО очищаем всё при загрузке
+    localStorage.clear();
+    sessionStorage.clear();
+
+    // Данные хранятся только в памяти
+    let count = 0;
+    let upgradeLevel = 0;
+
+    const egg = document.getElementById('egg');
+    const counter = document.getElementById('counter');
+    const clickValueDisplay = document.getElementById('clickValue');
+    const shopBtn = document.getElementById('shopBtn');
+    const backBtn = document.getElementById('backBtn');
+    const gameScreen = document.getElementById('gameScreen');
+    const shopScreen = document.getElementById('shopScreen');
+    const shopBalance = document.getElementById('shopBalance');
+    const buyButton = document.getElementById('buyButton');
+    const itemDesc = document.getElementById('itemDesc');
+    const itemLevel = document.getElementById('itemLevel');
+
+    // Функция для расчета стоимости улучшения
+    function getUpgradeCost(level) {
+        return 500 + (level * 750);
+    }
+
+    // Функция для расчета силы клика
+    function getClickPower(level) {
+        return 1 + level;
+    }
+
+    // Обновление интерфейса
+    function updateUI() {
+        const clickPower = getClickPower(upgradeLevel);
+        const nextCost = getUpgradeCost(upgradeLevel);
+
+        // Главный экран
+        counter.textContent = count;
+        clickValueDisplay.textContent = `+${clickPower} за клик`;
+
+        // Магазин
+        shopBalance.textContent = count;
+        itemLevel.textContent = `Уровень: ${upgradeLevel}`;
+        itemDesc.textContent = `+${clickPower + 1} за каждое нажатие`;
+        buyButton.textContent = `Купить (${nextCost})`;
+
+        // Активность кнопки
+        if (count < nextCost) {
+            buyButton.disabled = true;
+        } else {
+            buyButton.disabled = false;
         }
+    }
 
-        // Данные хранятся только в памяти (сбрасываются при закрытии)
-        let count = 0;
-        let upgradeLevel = 0;
+    // Клик по яйцу
+    egg.addEventListener('click', function () {
+        const clickPower = getClickPower(upgradeLevel);
+        count += clickPower;
+        updateUI();
 
-        const egg = document.getElementById('egg');
-        const counter = document.getElementById('counter');
-        const clickValueDisplay = document.getElementById('clickValue');
-        const shopBtn = document.getElementById('shopBtn');
-        const backBtn = document.getElementById('backBtn');
-        const gameScreen = document.getElementById('gameScreen');
-        const shopScreen = document.getElementById('shopScreen');
-        const shopBalance = document.getElementById('shopBalance');
-        const buyButton = document.getElementById('buyButton');
-        const itemDesc = document.getElementById('itemDesc');
-        const itemLevel = document.getElementById('itemLevel');
-
-        // Функция для расчета стоимости улучшения
-        function getUpgradeCost(level) {
-            return 500 + (level * 750);
+        if (tg && tg.HapticFeedback) {
+            tg.HapticFeedback.impactOccurred('light');
         }
+    });
 
-        // Функция для расчета силы клика
-        function getClickPower(level) {
-            return 1 + level;
-        }
+    // Открыть магазин
+    shopBtn.addEventListener('click', function () {
+        gameScreen.style.display = 'none';
+        shopScreen.style.display = 'flex';
+        updateUI();
+    });
 
-        // Обновление интерфейса
-        function updateUI() {
-            const clickPower = getClickPower(upgradeLevel);
-            const nextCost = getUpgradeCost(upgradeLevel);
+    // Вернуться назад
+    backBtn.addEventListener('click', function () {
+        shopScreen.style.display = 'none';
+        gameScreen.style.display = 'flex';
+        updateUI();
+    });
 
-            // Главный экран
-            counter.textContent = count;
-            clickValueDisplay.textContent = `+${clickPower} за клик`;
-
-            // Магазин
-            shopBalance.textContent = count;
-            itemLevel.textContent = `Уровень: ${upgradeLevel}`;
-            itemDesc.textContent = `+${clickPower + 1} за каждое нажатие`;
-            buyButton.textContent = `Купить (${nextCost})`;
-
-            // Активность кнопки
-            if (count < nextCost) {
-                buyButton.disabled = true;
-            } else {
-                buyButton.disabled = false;
-            }
-        }
-
-        // Клик по яйцу
-        egg.addEventListener('click', function () {
-            const clickPower = getClickPower(upgradeLevel);
-            count += clickPower;
+    // Купить улучшение
+    buyButton.addEventListener('click', function () {
+        const cost = getUpgradeCost(upgradeLevel);
+        
+        if (count >= cost) {
+            count -= cost;
+            upgradeLevel++;
+            
             updateUI();
 
             if (tg && tg.HapticFeedback) {
-                tg.HapticFeedback.impactOccurred('light');
+                tg.HapticFeedback.notificationOccurred('success');
             }
-        });
+        }
+    });
 
-        // Открыть магазин
-        shopBtn.addEventListener('click', function () {
-            gameScreen.style.display = 'none';
-            shopScreen.style.display = 'flex';
-            updateUI();
-        });
-
-        // Вернуться назад
-        backBtn.addEventListener('click', function () {
-            shopScreen.style.display = 'none';
-            gameScreen.style.display = 'flex';
-            updateUI();
-        });
-
-        // Купить улучшение
-        buyButton.addEventListener('click', function () {
-            const cost = getUpgradeCost(upgradeLevel);
-            
-            if (count >= cost) {
-                count -= cost;
-                upgradeLevel++;
-                
-                updateUI();
-
-                if (tg && tg.HapticFeedback) {
-                    tg.HapticFeedback.notificationOccurred('success');
-                }
-            }
-        });
-
-        // Инициализация
-        updateUI();
-    </script>
-
-</body>
-</html>
+    // Инициализация
+    updateUI();
+</script>
