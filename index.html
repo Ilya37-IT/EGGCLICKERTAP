@@ -4,58 +4,91 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Egg Tap</title>
+
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
     <style>
+        html, body {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+        }
+
         body {
-            background-color: var(--tg-theme-bg-color, #1c1c1e);
-            color: var(--tg-theme-text-color, #ffffff);
+            background: #1c1c1e;
+            color: white;
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+            overflow: hidden;
+        }
+
+        .app {
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
-            height: 100vh;
-            margin: 0;
-            font-family: -apple-system, sans-serif;
-            user-select: none;
-            -webkit-tap-highlight-color: transparent;
         }
-        #egg {
-            font-size: 150px;
+
+        .title {
+            font-size: 28px;
+            margin-bottom: 30px;
+            font-weight: bold;
+        }
+
+        .egg {
+            width: 160px;
+            height: 210px;
+            background: linear-gradient(135deg, #ffffff, #dcdcdc);
+            border-radius: 50% 50% 45% 45%;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.4);
             cursor: pointer;
             transition: transform 0.08s ease;
         }
-        #egg:active {
-            transform: scale(0.85);
+
+        .egg:active {
+            transform: scale(0.9);
         }
-        #counter {
-            font-size: 42px;
-            font-weight: bold;
+
+        .counter {
             margin-top: 30px;
+            font-size: 44px;
+            font-weight: bold;
         }
     </style>
 </head>
 <body>
-    <div id="egg">🥚</div>
-    <div id="counter">0</div>
+
+    <div class="app">
+        <div class="title">EGG TAP</div>
+        <div class="egg" id="egg"></div>
+        <div class="counter" id="counter">0</div>
+    </div>
 
     <script>
-        const tg = window.Telegram.WebApp;
-        tg.ready();
-        tg.expand();
+        const tg = window.Telegram && window.Telegram.WebApp;
+
+        if (tg) {
+            tg.ready();
+            tg.expand();
+        }
 
         let count = 0;
-        const egg = document.getElementById('egg');
-        const counterDisplay = document.getElementById('counter');
 
-        egg.addEventListener('click', () => {
+        const egg = document.getElementById("egg");
+        const counter = document.getElementById("counter");
+
+        egg.addEventListener("click", function () {
             count++;
-            counterDisplay.innerText = count;
+            counter.textContent = count;
 
-            // Вибрация при клике (приятная фича!)
-            if (tg.HapticFeedback) {
-                tg.HapticFeedback.impactOccurred('light');
+            if (tg && tg.HapticFeedback) {
+                tg.HapticFeedback.impactOccurred("light");
             }
         });
     </script>
+
 </body>
 </html>
