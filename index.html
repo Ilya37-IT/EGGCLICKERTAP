@@ -65,6 +65,15 @@
             transform: scale(0.9);
         }
 
+        .egg.auto-clicking {
+            animation: autoClick 0.1s ease infinite;
+        }
+
+        @keyframes autoClick {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(0.92); }
+        }
+
         .counter {
             margin-top: 30px;
             font-size: 48px;
@@ -100,6 +109,46 @@
             transform: scale(0.95);
         }
 
+        /* Иконка автокликера */
+        .autoclicker-icon {
+            position: fixed;
+            top: max(20px, env(safe-area-inset-top, 20px));
+            left: max(20px, env(safe-area-inset-left, 20px));
+            background: linear-gradient(135deg, #ff9500, #ff6b00);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            transition: transform 0.1s ease;
+            z-index: 1000;
+            display: none;
+        }
+
+        .autoclicker-icon.visible {
+            display: block;
+        }
+
+        .autoclicker-icon:active:not(:disabled) {
+            transform: scale(0.95);
+        }
+
+        .autoclicker-icon:disabled {
+            background: linear-gradient(135deg, #666, #555);
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+
+        .autoclicker-timer {
+            display: block;
+            font-size: 12px;
+            margin-top: 4px;
+            color: #ffd700;
+        }
+
         /* Экран магазина */
         .shop-screen {
             display: none;
@@ -109,6 +158,7 @@
             width: 100%;
             height: 100%;
             padding: 20px;
+            overflow-y: auto;
         }
 
         .shop-title {
@@ -220,6 +270,11 @@
                 font-size: 14px;
             }
 
+            .autoclicker-icon {
+                padding: 10px 16px;
+                font-size: 14px;
+            }
+
             .shop-title {
                 font-size: 28px;
             }
@@ -245,6 +300,10 @@
     <!-- Главный экран -->
     <div class="game-screen" id="gameScreen">
         <button class="shop-button" id="shopBtn">🛒 Shop</button>
+        <button class="autoclicker-icon" id="autoclickerIcon">
+            ⚡ <span id="autoclickerCount">0</span>
+            <span class="autoclicker-timer" id="autoclickerTimer"></span>
+        </button>
         
         <div class="game-content">
             <div class="egg" id="egg"></div>
@@ -261,117 +320,233 @@
         <div class="shop-item">
             <div class="item-info">
                 <div class="item-name">⚡ Сила клика</div>
-                <div class="item-desc" id="itemDesc">+2 за каждое нажатие</div>
-                <div class="item-level" id="itemLevel">Уровень: 0</div>
+                <div class="item-desc" id="clickUpgradeDesc">+2 за каждое нажатие</div>
+                <div class="item-level" id="clickUpgradeLevel">Уровень: 0</div>
             </div>
-            <button class="buy-button" id="buyButton">Купить (500)</button>
+            <button class="buy-button" id="buyClickUpgrade">Купить (500)</button>
+        </div>
+
+        <div class="shop-item">
+            <div class="item-info">
+                <div class="item-name">🤖 Автокликер</div>
+                <div class="item-desc">25 секунд автоматических кликов</div>
+                <div class="item-level" id="autoclickerOwned">Куплено: 0</div>
+            </div>
+            <button class="buy-button" id="buyAutoclicker">Купить (4750)</button>
         </div>
 
         <button class="back-button" id="backBtn">← Назад</button>
     </div>
 
     <script>
-    const tg = window.Telegram && window.Telegram.WebApp;
+        const tg = window.Telegram && window.Telegram.WebApp;
 
-    if (tg) {
-        tg.ready();
-        tg.expand();
-    }
-
-    // ПРИНУДИТЕЛЬНО очищаем всё при загрузке
-    localStorage.clear();
-    sessionStorage.clear();
-
-    // Данные хранятся только в памяти
-    let count = 0;
-    let upgradeLevel = 0;
-
-    const egg = document.getElementById('egg');
-    const counter = document.getElementById('counter');
-    const clickValueDisplay = document.getElementById('clickValue');
-    const shopBtn = document.getElementById('shopBtn');
-    const backBtn = document.getElementById('backBtn');
-    const gameScreen = document.getElementById('gameScreen');
-    const shopScreen = document.getElementById('shopScreen');
-    const shopBalance = document.getElementById('shopBalance');
-    const buyButton = document.getElementById('buyButton');
-    const itemDesc = document.getElementById('itemDesc');
-    const itemLevel = document.getElementById('itemLevel');
-
-    // Функция для расчета стоимости улучшения
-    function getUpgradeCost(level) {
-        return 500 + (level * 750);
-    }
-
-    // Функция для расчета силы клика
-    function getClickPower(level) {
-        return 1 + level;
-    }
-
-    // Обновление интерфейса
-    function updateUI() {
-        const clickPower = getClickPower(upgradeLevel);
-        const nextCost = getUpgradeCost(upgradeLevel);
-
-        // Главный экран
-        counter.textContent = count;
-        clickValueDisplay.textContent = `+${clickPower} за клик`;
-
-        // Магазин
-        shopBalance.textContent = count;
-        itemLevel.textContent = `Уровень: ${upgradeLevel}`;
-        itemDesc.textContent = `+${clickPower + 1} за каждое нажатие`;
-        buyButton.textContent = `Купить (${nextCost})`;
-
-        // Активность кнопки
-        if (count < nextCost) {
-            buyButton.disabled = true;
-        } else {
-            buyButton.disabled = false;
+        if (tg) {
+            tg.ready();
+            tg.expand();
         }
-    }
 
-    // Клик по яйцу
-    egg.addEventListener('click', function () {
-        const clickPower = getClickPower(upgradeLevel);
-        count += clickPower;
-        updateUI();
+        // ПРИНУДИТЕЛЬНО очищаем всё при загрузке
+        localStorage.clear();
+        sessionStorage.clear();
 
-        if (tg && tg.HapticFeedback) {
-            tg.HapticFeedback.impactOccurred('light');
-        }
-    });
+        // Данные хранятся только в памяти
+        let count = 0;
+        let upgradeLevel = 0;
+        let autoclickerCount = 0;
+        let autoclickerActive = false;
+        let autoclickerTimeLeft = 0;
+        let autoclickerInterval = null;
+        let autoclickerTimerInterval = null;
 
-    // Открыть магазин
-    shopBtn.addEventListener('click', function () {
-        gameScreen.style.display = 'none';
-        shopScreen.style.display = 'flex';
-        updateUI();
-    });
-
-    // Вернуться назад
-    backBtn.addEventListener('click', function () {
-        shopScreen.style.display = 'none';
-        gameScreen.style.display = 'flex';
-        updateUI();
-    });
-
-    // Купить улучшение
-    buyButton.addEventListener('click', function () {
-        const cost = getUpgradeCost(upgradeLevel);
+        const egg = document.getElementById('egg');
+        const counter = document.getElementById('counter');
+        const clickValueDisplay = document.getElementById('clickValue');
+        const shopBtn = document.getElementById('shopBtn');
+        const backBtn = document.getElementById('backBtn');
+        const gameScreen = document.getElementById('gameScreen');
+        const shopScreen = document.getElementById('shopScreen');
+        const shopBalance = document.getElementById('shopBalance');
         
-        if (count >= cost) {
-            count -= cost;
-            upgradeLevel++;
+        // Улучшение силы клика
+        const buyClickUpgrade = document.getElementById('buyClickUpgrade');
+        const clickUpgradeDesc = document.getElementById('clickUpgradeDesc');
+        const clickUpgradeLevel = document.getElementById('clickUpgradeLevel');
+        
+        // Автокликер
+        const buyAutoclicker = document.getElementById('buyAutoclicker');
+        const autoclickerOwned = document.getElementById('autoclickerOwned');
+        const autoclickerIcon = document.getElementById('autoclickerIcon');
+        const autoclickerCountDisplay = document.getElementById('autoclickerCount');
+        const autoclickerTimer = document.getElementById('autoclickerTimer');
+
+        // Функция для расчета стоимости улучшения силы клика
+        function getClickUpgradeCost(level) {
+            return 500 + (level * 750);
+        }
+
+        // Функция для расчета силы клика
+        function getClickPower(level) {
+            return 1 + level;
+        }
+
+        // Функция для расчета стоимости автокликера
+        function getAutoclickerCost(owned) {
+            return 4750 + (owned * 5000);
+        }
+
+        // Обновление интерфейса
+        function updateUI() {
+            const clickPower = getClickPower(upgradeLevel);
+            const clickUpgradeCost = getClickUpgradeCost(upgradeLevel);
+            const autoclickerCost = getAutoclickerCost(autoclickerCount);
+
+            // Главный экран
+            counter.textContent = count;
+            clickValueDisplay.textContent = `+${clickPower} за клик`;
+
+            // Иконка автокликера
+            if (autoclickerCount > 0) {
+                autoclickerIcon.classList.add('visible');
+                autoclickerCountDisplay.textContent = autoclickerCount;
+                autoclickerIcon.disabled = autoclickerActive;
+            } else {
+                autoclickerIcon.classList.remove('visible');
+            }
+
+            // Магазин
+            shopBalance.textContent = count;
             
+            // Улучшение силы клика
+            clickUpgradeLevel.textContent = `Уровень: ${upgradeLevel}`;
+            clickUpgradeDesc.textContent = `+${clickPower + 1} за каждое нажатие`;
+            buyClickUpgrade.textContent = `Купить (${clickUpgradeCost})`;
+            buyClickUpgrade.disabled = count < clickUpgradeCost;
+            
+            // Автокликер
+            autoclickerOwned.textContent = `Куплено: ${autoclickerCount}`;
+            buyAutoclicker.textContent = `Купить (${autoclickerCost})`;
+            buyAutoclicker.disabled = count < autoclickerCost;
+        }
+
+        // Клик по яйцу
+        egg.addEventListener('click', function () {
+            const clickPower = getClickPower(upgradeLevel);
+            count += clickPower;
             updateUI();
 
             if (tg && tg.HapticFeedback) {
+                tg.HapticFeedback.impactOccurred('light');
+            }
+        });
+
+        // Активация автокликера
+        autoclickerIcon.addEventListener('click', function () {
+            if (autoclickerCount > 0 && !autoclickerActive) {
+                startAutoclicker();
+            }
+        });
+
+        // Запуск автокликера
+        function startAutoclicker() {
+            autoclickerActive = true;
+            autoclickerTimeLeft = 25;
+            autoclickerCount--;
+            
+            egg.classList.add('auto-clicking');
+            autoclickerIcon.disabled = true;
+            autoclickerTimer.textContent = `${autoclickerTimeLeft}с`;
+            
+            if (tg && tg.HapticFeedback) {
                 tg.HapticFeedback.notificationOccurred('success');
             }
-        }
-    });
 
-    // Инициализация
-    updateUI();
-</script>
+            // Автоклик каждые 50мс (20 кликов в секунду)
+            autoclickerInterval = setInterval(() => {
+                const clickPower = getClickPower(upgradeLevel);
+                count += clickPower;
+                updateUI();
+            }, 50);
+
+            // Таймер обратного отсчета
+            autoclickerTimerInterval = setInterval(() => {
+                autoclickerTimeLeft--;
+                autoclickerTimer.textContent = `${autoclickerTimeLeft}с`;
+                
+                if (autoclickerTimeLeft <= 0) {
+                    stopAutoclicker();
+                }
+            }, 1000);
+
+            updateUI();
+        }
+
+        // Остановка автокликера
+        function stopAutoclicker() {
+            autoclickerActive = false;
+            egg.classList.remove('auto-clicking');
+            
+            clearInterval(autoclickerInterval);
+            clearInterval(autoclickerTimerInterval);
+            
+            autoclickerTimer.textContent = '';
+            
+            if (tg && tg.HapticFeedback) {
+                tg.HapticFeedback.notificationOccurred('warning');
+            }
+
+            updateUI();
+        }
+
+        // Открыть магазин
+        shopBtn.addEventListener('click', function () {
+            gameScreen.style.display = 'none';
+            shopScreen.style.display = 'flex';
+            updateUI();
+        });
+
+        // Вернуться назад
+        backBtn.addEventListener('click', function () {
+            shopScreen.style.display = 'none';
+            gameScreen.style.display = 'flex';
+            updateUI();
+        });
+
+        // Купить улучшение силы клика
+        buyClickUpgrade.addEventListener('click', function () {
+            const cost = getClickUpgradeCost(upgradeLevel);
+            
+            if (count >= cost) {
+                count -= cost;
+                upgradeLevel++;
+                
+                updateUI();
+
+                if (tg && tg.HapticFeedback) {
+                    tg.HapticFeedback.notificationOccurred('success');
+                }
+            }
+        });
+
+        // Купить автокликер
+        buyAutoclicker.addEventListener('click', function () {
+            const cost = getAutoclickerCost(autoclickerCount);
+            
+            if (count >= cost) {
+                count -= cost;
+                autoclickerCount++;
+                
+                updateUI();
+
+                if (tg && tg.HapticFeedback) {
+                    tg.HapticFeedback.notificationOccurred('success');
+                }
+            }
+        });
+
+        // Инициализация
+        updateUI();
+    </script>
+
+</body>
+</html>
